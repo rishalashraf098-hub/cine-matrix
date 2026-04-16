@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Cine Matrix</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Local CSS -->
+    <link rel="stylesheet" href="./styles.css">
+    <style>
+        body {
+            padding-top: 120px;
+            padding-bottom: 60px;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+        }
+        .admin-table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--glass-bg);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .admin-table th, .admin-table td {
+            text-align: left;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .admin-table th {
+            font-family: var(--font-heading);
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.9rem;
+            background: rgba(8, 8, 8, 0.5);
+            white-space: nowrap;
+        }
+        .admin-table tr:last-child th,
+        .admin-table tr:last-child td {
+            border-bottom: none;
+        }
+        .admin-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            transition: background 0.3s;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+        .action-btn {
+            background: transparent;
+            border: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: var(--font-body);
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            border-color: #ff4a4a;
+            color: #ff4a4a;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        .metric-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: 16px;
+        }
+        .metric-value {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--accent);
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="glass-nav">
+        <div class="nav-container">
+            <h1 class="logo">Cine Matrix Admin.</h1>
+            <ul class="nav-links">
+                <li><a href="./index.html">Back to Main Site</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="admin-header">
+            <div>
+                <h2>Dashboard Overview</h2>
+                <p>Manage your client inquiries and design requests.</p>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Inquiries</h3>
+                <div class="metric-value" id="count-total">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Recent (7 Days)</h3>
+                <div class="metric-value" id="count-recent">0</div>
+            </div>
+            <div class="metric-card">
+                <h3>Status</h3>
+                <div class="metric-value" style="color: #4aff8f;">Active</div>
+            </div>
+        </div>
+
+        <h3>Recent Client Inquiries</h3>
+        <p style="margin-bottom: 2rem;">Confidential client submissions for custom theater environments.</p>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table" id="inquiries-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Client Name</th>
+                        <th>Email Contact</th>
+                        <th>Project Overview</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inquiries-body">
+                    <!-- Data injected via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tbody = document.getElementById('inquiries-body');
+            
+            function renderTable() {
+                const inquiries = JSON.parse(localStorage.getItem('cine_inquiries') || '[]');
+                
+                // Update metrics
+                document.getElementById('count-total').textContent = inquiries.length;
+                const recentCount = inquiries.filter(i => (Date.now() - i.id) < 7 * 24 * 60 * 60 * 1000).length;
+                document.getElementById('count-recent').textContent = recentCount;
+
+                if (inquiries.length === 0) {
+                    tbody.innerHTML = `<tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <h3 style="color: var(--accent); margin-bottom: 1rem;">No Database Entries</h3>
+                                <p>There are currently no inquiries. Visit the main site to submit a test contact form.</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                    return;
+                }
+
+                // Sort newest descending
+                inquiries.sort((a, b) => b.id - a.id);
+
+                tbody.innerHTML = inquiries.map(inq => `
+                    <tr>
+                        <td style="white-space: nowrap; color: var(--text-secondary); font-size: 0.9rem;">${inq.date}</td>
+                        <td style="font-weight: 500;">${inq.name}</td>
+                        <td><a href="mailto:${inq.email}" style="color: var(--accent);">${inq.email}</a></td>
+                        <td style="max-width: 400px; line-height: 1.4;">${inq.message || '<em style="color:var(--text-secondary)">No details provided</em>'}</td>
+                        <td><button class="action-btn" onclick="deleteInquiry(${inq.id})">Remove</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            window.deleteInquiry = (id) => {
+                if(confirm("Permanently delete this client inquiry? This cannot be undone.")) {
+                    let inquiries = JSON.parse(localStorage.getItem('cine_inquiries') || '[]');
+                    inquiries = inquiries.filter(i => i.id !== id);
+                    localStorage.setItem('cine_inquiries', JSON.stringify(inquiries));
+                    renderTable();
+                }
+            };
+
+            renderTable();
+        });
+    </script>
+</body>
+</html>
